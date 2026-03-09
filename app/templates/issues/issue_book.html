@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% block title %}Issue Book{% endblock %}
+{% block page_title %}Issue Book{% endblock %}
+{% block page_subtitle %}Issue a book to a member{% endblock %}
+
+{% block content %}
+
+<div style="max-width:800px;">
+  <div class="card">
+    <div class="card-header">
+      <h5 class="card-title">
+        <span class="material-icons-round" style="color:var(--primary);">swap_horiz</span>
+        Issue Book to Member
+      </h5>
+      <a href="/issues/" class="btn btn-outline btn-sm">
+        <span class="material-icons-round">arrow_back</span>
+        Back
+      </a>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="/issues/issue">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- Member Selection -->
+        <div class="form-group" style="margin-bottom:20px;">
+          <label class="form-label">Select Member <span style="color:var(--danger);">*</span></label>
+          <select name="member_id" class="form-control" required onchange="updateMemberInfo(this)">
+            <option value="">-- Select Member --</option>
+            {% for member in members %}
+            <option value="{{ member.id }}"
+              data-code="{{ member.member_code }}"
+              data-fines="{{ member.pending_fines }}"
+              data-issues="{{ member.active_issues_count }}">
+              {{ member.member_code }} — {{ member.name }} ({{ member.email }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Member Info Box -->
+        <div id="memberInfo" style="display:none; background:rgba(79,70,229,0.05); border:1px solid rgba(79,70,229,0.2); border-radius:10px; padding:16px; margin-bottom:20px;">
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+            <div>
+              <div style="font-size:11px; color:var(--gray);">MEMBER CODE</div>
+              <div style="font-weight:700; color:var(--primary);" id="infoCode">—</div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:var(--gray);">ACTIVE ISSUES</div>
+              <div style="font-weight:700; color:var(--warning);" id="infoIssues">—</div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:var(--gray);">PENDING FINES</div>
+              <div style="font-weight:700; color:var(--danger);" id="infoFines">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Book Selection -->
+        <div class="form-group" style="margin-bottom:20px;">
+          <label class="form-label">Select Book <span style="color:var(--danger);">*</span></label>
+          <select name="book_id" class="form-control" required onchange="updateBookInfo(this)">
+            <option value="">-- Select Book --</option>
+            {% for book in books %}
+            <option value="{{ book.id }}"
+              data-available="{{ book.available_copies }}"
+              data-total="{{ book.total_copies }}"
+              data-author="{{ book.author }}">
+              {{ book.title }} — {{ book.author }}
+              ({{ book.available_copies }}/{{ book.total_copies }} available)
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Book Info Box -->
+        <div id="bookInfo" style="display:none; background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.2); border-radius:10px; padding:16px; margin-bottom:20px;">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div>
+              <div style="font-size:11px; color:var(--gray);">AUTHOR</div>
+              <div style="font-weight:700; color:var(--dark);" id="infoAuthor">—</div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:var(--gray);">AVAILABLE COPIES</div>
+              <div style="font-weight:700; color:var(--success);" id="infoAvailable">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Due Date Info -->
+        <div style="background:rgba(59,130,246,0.05); border:1px solid rgba(59,130,246,0.2); border-radius:10px; padding:16px; margin-bottom:20px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="material-icons-round" style="color:var(--info);">event</span>
+            <div>
+              <div style="font-size:13px; font-weight:600; color:var(--info);">Loan Period: 14 Days</div>
+              <div style="font-size:12px; color:var(--gray);">
+                Issue Date: <strong>Today</strong> |
+                Due Date: <strong id="dueDateDisplay">{{ (today + timedelta(days=14)).strftime('%d %b %Y') }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="form-group" style="margin-bottom:24px;">
+          <label class="form-label">Notes (Optional)</label>
+          <textarea name="notes" class="form-control" rows="2" placeholder="Any special notes..."></textarea>
+        </div>
+
+        <!-- Buttons -->
+        <div style="display:flex; gap:12px;">
+          <button type="submit" class="btn btn-primary btn-lg">
+            <span class="material-icons-round">swap_horiz</span>
+            Issue Book
+          </button>
+          <a href="/issues/" class="btn btn-outline btn-lg">
+            <span class="material-icons-round">arrow_back</span>
+            Cancel
+          </a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateMemberInfo(select) {
+  const option = select.options[select.selectedIndex];
+  if (option.value) {
+    document.getElementById('memberInfo').style.display = 'block';
+    document.getElementById('infoCode').textContent = option.dataset.code;
+    document.getElementById('infoIssues').textContent = option.dataset.issues;
+    document.getElementById('infoFines').textContent = '₹' + parseFloat(option.dataset.fines).toFixed(0);
+  } else {
+    document.getElementById('memberInfo').style.display = 'none';
+  }
+}
+
+function updateBookInfo(select) {
+  const option = select.options[select.selectedIndex];
+  if (option.value) {
+    document.getElementById('bookInfo').style.display = 'block';
+    document.getElementById('infoAuthor').textContent = option.dataset.author;
+    document.getElementById('infoAvailable').textContent =
+      option.dataset.available + ' / ' + option.dataset.total + ' copies';
+  } else {
+    document.getElementById('bookInfo').style.display = 'none';
+  }
+}
+</script>
+{% endblock %}

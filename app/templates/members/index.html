@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% block title %}Members{% endblock %}
+{% block page_title %}Members{% endblock %}
+{% block page_subtitle %}Manage library members{% endblock %}
+
+{% block content %}
+
+<!-- Header Row -->
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+  <div>
+    <h3 style="font-size:20px; font-weight:600; color:var(--dark); margin:0;">All Members</h3>
+    <p style="color:var(--gray); font-size:13px; margin:0;">{{ members|length }} members found</p>
+  </div>
+  <a href="/members/add" class="btn btn-primary">
+    <span class="material-icons-round">person_add</span>
+    Register Member
+  </a>
+</div>
+
+<!-- Search & Filter -->
+<div class="card" style="margin-bottom:20px;">
+  <div class="card-body" style="padding:16px;">
+    <form method="GET" action="/members/" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+      <div class="search-box" style="flex:1; min-width:200px; position:relative;">
+        <span class="material-icons-round" style="position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--gray);">search</span>
+        <input type="text" name="search" value="{{ search }}" placeholder="Search by name, email, phone, member code..."
+          style="width:100%; padding:10px 16px 10px 40px; border:2px solid var(--gray-light); border-radius:10px; font-size:14px; outline:none; background:var(--light);">
+      </div>
+      <select name="status" style="padding:10px 16px; border:2px solid var(--gray-light); border-radius:10px; font-size:14px; outline:none; background:var(--light); color:var(--dark);">
+        <option value="">All Status</option>
+        <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Active</option>
+        <option value="inactive" {% if selected_status == 'inactive' %}selected{% endif %}>Inactive</option>
+        <option value="suspended" {% if selected_status == 'suspended' %}selected{% endif %}>Suspended</option>
+      </select>
+      <button type="submit" class="btn btn-primary">
+        <span class="material-icons-round">filter_list</span>
+        Filter
+      </button>
+      <a href="/members/" class="btn btn-outline">
+        <span class="material-icons-round">clear</span>
+        Clear
+      </a>
+    </form>
+  </div>
+</div>
+
+<!-- Members Table -->
+<div class="card">
+  <div class="card-body" style="padding:0;">
+    {% if members %}
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Member</th>
+            <th>Member Code</th>
+            <th>Phone</th>
+            <th>Membership</th>
+            <th>Expiry</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for member in members %}
+          <tr>
+            <td style="color:var(--gray); font-size:13px;">{{ loop.index }}</td>
+            <td>
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:40px; height:40px; background:linear-gradient(135deg, var(--primary), var(--secondary)); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:700; font-size:16px; flex-shrink:0;">
+                  {{ member.name[0].upper() }}
+                </div>
+                <div>
+                  <div style="font-weight:600; color:var(--dark);">{{ member.name }}</div>
+                  <div style="font-size:12px; color:var(--gray);">{{ member.email }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span style="font-family:monospace; font-weight:600; color:var(--primary); background:rgba(79,70,229,0.1); padding:4px 10px; border-radius:6px;">
+                {{ member.member_code }}
+              </span>
+            </td>
+            <td style="color:var(--gray); font-size:14px;">{{ member.phone or '—' }}</td>
+            <td style="font-size:13px; color:var(--gray);">{{ member.membership_date.strftime('%d %b %Y') if member.membership_date else '—' }}</td>
+            <td>
+              {% if member.expiry_date %}
+                {% if member.is_expired %}
+                  <span style="color:var(--danger); font-size:13px; font-weight:600;">
+                    ⚠️ {{ member.expiry_date.strftime('%d %b %Y') }}
+                  </span>
+                {% elif member.days_until_expiry <= 30 %}
+                  <span style="color:var(--warning); font-size:13px; font-weight:600;">
+                    ⏳ {{ member.expiry_date.strftime('%d %b %Y') }}
+                  </span>
+                {% else %}
+                  <span style="color:var(--success); font-size:13px;">
+                    {{ member.expiry_date.strftime('%d %b %Y') }}
+                  </span>
+                {% endif %}
+              {% else %}
+                <span style="color:var(--gray);">—</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if member.status == 'active' %}
+                <span class="badge badge-success">Active</span>
+              {% elif member.status == 'inactive' %}
+                <span class="badge badge-gray">Inactive</span>
+              {% else %}
+                <span class="badge badge-danger">Suspended</span>
+              {% endif %}
+            </td>
+            <td>
+              <div style="display:flex; gap:6px;">
+                <a href="/members/profile/{{ member.id }}" class="btn btn-outline btn-sm" title="View Profile">
+                  <span class="material-icons-round" style="font-size:16px;">visibility</span>
+                </a>
+                <a href="/members/edit/{{ member.id }}" class="btn btn-warning btn-sm" title="Edit">
+                  <span class="material-icons-round" style="font-size:16px;">edit</span>
+                </a>
+                {% if member.status == 'active' %}
+                <form method="POST" action="/members/status/{{ member.id }}/suspended" style="display:inline;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-danger btn-sm" title="Suspend" onclick="return confirm('Suspend this member?')">
+                    <span class="material-icons-round" style="font-size:16px;">block</span>
+                  </button>
+                </form>
+                {% else %}
+                <form method="POST" action="/members/status/{{ member.id }}/active" style="display:inline;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-success btn-sm" title="Activate">
+                    <span class="material-icons-round" style="font-size:16px;">check_circle</span>
+                  </button>
+                </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:60px 20px;">
+      <span class="material-icons-round" style="font-size:64px; color:var(--gray-light);">people</span>
+      <h4 style="color:var(--gray); margin-top:16px;">No members found</h4>
+      <p style="color:var(--gray); font-size:14px;">Register your first member to get started</p>
+      <a href="/members/add" class="btn btn-primary" style="margin-top:16px;">
+        <span class="material-icons-round">person_add</span>
+        Register First Member
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

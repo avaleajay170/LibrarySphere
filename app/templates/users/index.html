@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% block title %}User Management{% endblock %}
+{% block page_title %}User Management{% endblock %}
+{% block page_subtitle %}Manage admin and librarian accounts{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+  <div>
+    <h3 style="font-size:20px; font-weight:600; color:var(--dark); margin:0;">All Users</h3>
+    <p style="color:var(--gray); font-size:13px; margin:0;">{{ users|length }} accounts</p>
+  </div>
+  <a href="/users/add" class="btn btn-primary">
+    <span class="material-icons-round">person_add</span>
+    Add New User
+  </a>
+</div>
+
+<!-- Users Table -->
+<div class="card">
+  <div class="card-body" style="padding:0;">
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>User</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+          <tr>
+            <td style="color:var(--gray); font-size:13px;">{{ loop.index }}</td>
+            <td>
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:700; font-size:16px;
+                  background:{% if user.role == 'admin' %}linear-gradient(135deg,#4F46E5,#7C3AED){% else %}linear-gradient(135deg,#10B981,#34d399){% endif %};">
+                  {{ user.username[0].upper() }}
+                </div>
+                <div>
+                  <div style="font-weight:600; color:var(--dark);">{{ user.username }}</div>
+                  {% if user.id == current_user.id %}
+                  <span style="font-size:11px; color:var(--primary);">● You</span>
+                  {% endif %}
+                </div>
+              </div>
+            </td>
+            <td style="font-size:13px; color:var(--gray);">{{ user.email }}</td>
+            <td>
+              {% if user.role == 'admin' %}
+                <span class="badge badge-info" style="background:rgba(79,70,229,0.1); color:var(--primary);">
+                  🔐 Admin
+                </span>
+              {% else %}
+                <span class="badge badge-success">
+                  📚 Librarian
+                </span>
+              {% endif %}
+            </td>
+            <td>
+              {% if user.is_active %}
+                <span class="badge badge-success">✅ Active</span>
+              {% else %}
+                <span class="badge badge-danger">❌ Inactive</span>
+              {% endif %}
+            </td>
+            <td style="font-size:13px; color:var(--gray);">
+              {{ user.created_at.strftime('%d %b %Y') if user.created_at else '—' }}
+            </td>
+            <td>
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+
+                <!-- Toggle Status -->
+                {% if user.id != current_user.id %}
+                <form method="POST" action="/users/toggle/{{ user.id }}" style="display:inline;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn {% if user.is_active %}btn-danger{% else %}btn-success{% endif %} btn-sm"
+                    onclick="return confirm('{% if user.is_active %}Deactivate{% else %}Activate{% endif %} {{ user.username }}?')">
+                    <span class="material-icons-round" style="font-size:15px;">
+                      {% if user.is_active %}block{% else %}check_circle{% endif %}
+                    </span>
+                    {% if user.is_active %}Deactivate{% else %}Activate{% endif %}
+                  </button>
+                </form>
+                {% endif %}
+
+                <!-- Reset Password -->
+                <button type="button" class="btn btn-warning btn-sm"
+                  onclick="showResetForm({{ user.id }}, '{{ user.username }}')">
+                  <span class="material-icons-round" style="font-size:15px;">lock_reset</span>
+                  Reset Password
+                </button>
+
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div id="resetModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:white; border-radius:16px; padding:32px; width:400px; max-width:90vw; box-shadow:var(--shadow-lg);">
+    <h4 style="font-weight:700; color:var(--dark); margin-bottom:4px;">Reset Password</h4>
+    <p id="resetUsername" style="color:var(--gray); font-size:14px; margin-bottom:20px;"></p>
+    <form method="POST" id="resetForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group" style="margin-bottom:16px;">
+        <label class="form-label">New Password</label>
+        <input type="password" name="new_password" class="form-control" placeholder="Min 6 characters" required minlength="6">
+      </div>
+      <div style="display:flex; gap:12px;">
+        <button type="submit" class="btn btn-primary">
+          <span class="material-icons-round">lock_reset</span>
+          Reset
+        </button>
+        <button type="button" class="btn btn-outline" onclick="hideResetForm()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showResetForm(userId, username) {
+  document.getElementById('resetModal').style.display = 'flex';
+  document.getElementById('resetUsername').textContent = 'Resetting password for: ' + username;
+  document.getElementById('resetForm').action = '/users/reset-password/' + userId;
+}
+function hideResetForm() {
+  document.getElementById('resetModal').style.display = 'none';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}Add User{% endblock %}
+{% block page_title %}Add User{% endblock %}
+{% block page_subtitle %}Create a new admin or librarian account{% endblock %}
+
+{% block content %}
+
+<div style="max-width:600px;">
+  <div class="card">
+    <div class="card-header">
+      <h5 class="card-title">
+        <span class="material-icons-round" style="color:var(--primary);">person_add</span>
+        Create New User
+      </h5>
+      <a href="/users/" class="btn btn-outline btn-sm">
+        <span class="material-icons-round">arrow_back</span>
+        Back
+      </a>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="/users/add">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="form-group">
+          <label class="form-label">Username <span style="color:var(--danger);">*</span></label>
+          <input type="text" name="username" class="form-control" placeholder="Enter username" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email Address <span style="color:var(--danger);">*</span></label>
+          <input type="email" name="email" class="form-control" placeholder="Enter email address" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Role <span style="color:var(--danger);">*</span></label>
+          <select name="role" class="form-control">
+            <option value="librarian">📚 Librarian</option>
+            <option value="admin">🔐 Admin</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password <span style="color:var(--danger);">*</span></label>
+          <input type="password" name="password" class="form-control" placeholder="Min 6 characters" required minlength="6">
+        </div>
+
+        <!-- Role Info Box -->
+        <div style="background:rgba(79,70,229,0.05); border:1px solid rgba(79,70,229,0.2); border-radius:10px; padding:16px; margin-bottom:24px;">
+          <div style="font-size:13px; font-weight:600; color:var(--primary); margin-bottom:10px;">
+            <span class="material-icons-round" style="font-size:16px; vertical-align:middle;">info</span>
+            Role Permissions
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:12px; color:var(--gray);">
+            <div>📚 <strong>Librarian:</strong></div>
+            <div>Books, Members, Issues, Fines (collect only)</div>
+            <div>🔐 <strong>Admin:</strong></div>
+            <div>Everything + Categories, Waive Fines, User Management</div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:12px;">
+          <button type="submit" class="btn btn-primary btn-lg">
+            <span class="material-icons-round">person_add</span>
+            Create User
+          </button>
+          <a href="/users/" class="btn btn-outline btn-lg">
+            <span class="material-icons-round">arrow_back</span>
+            Cancel
+          </a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

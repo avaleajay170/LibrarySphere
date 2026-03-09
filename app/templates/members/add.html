@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block title %}Register Member{% endblock %}
+{% block page_title %}Register Member{% endblock %}
+{% block page_subtitle %}Add a new library member{% endblock %}
+
+{% block content %}
+
+<div style="max-width:800px;">
+  <div class="card">
+    <div class="card-header">
+      <h5 class="card-title">
+        <span class="material-icons-round" style="color:var(--primary);">person_add</span>
+        New Member Registration
+      </h5>
+      <a href="/members/" class="btn btn-outline btn-sm">
+        <span class="material-icons-round">arrow_back</span>
+        Back
+      </a>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="/members/add">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- Row 1 -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Full Name <span style="color:var(--danger);">*</span></label>
+            <input type="text" name="name" class="form-control" placeholder="Enter full name" required>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Email Address <span style="color:var(--danger);">*</span></label>
+            <input type="email" name="email" class="form-control" placeholder="Enter email address" required>
+          </div>
+        </div>
+
+        <!-- Row 2 -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Phone Number</label>
+            <input type="text" name="phone" class="form-control" placeholder="Enter phone number">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Gender</label>
+            <select name="gender" class="form-control">
+              <option value="">Select Gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Row 3 -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Date of Birth</label>
+            <input type="date" name="date_of_birth" class="form-control">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Membership Duration</label>
+            <select name="membership_months" class="form-control">
+              <option value="6">6 Months</option>
+              <option value="12" selected>1 Year</option>
+              <option value="24">2 Years</option>
+              <option value="36">3 Years</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Address -->
+        <div class="form-group" style="margin-bottom:24px;">
+          <label class="form-label">Address</label>
+          <textarea name="address" class="form-control" rows="3" placeholder="Enter full address..."></textarea>
+        </div>
+
+        <!-- Info Box -->
+        <div style="background:rgba(79,70,229,0.05); border:1px solid rgba(79,70,229,0.2); border-radius:10px; padding:16px; margin-bottom:24px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <span class="material-icons-round" style="color:var(--primary); font-size:18px;">info</span>
+            <span style="font-weight:600; color:var(--primary); font-size:14px;">Auto Generated</span>
+          </div>
+          <p style="color:var(--gray); font-size:13px; margin:0;">
+            Member Code will be auto-generated (e.g. <strong>LIB0001</strong>) and membership dates will be set automatically.
+          </p>
+        </div>
+
+        <!-- Buttons -->
+        <div style="display:flex; gap:12px;">
+          <button type="submit" class="btn btn-primary btn-lg">
+            <span class="material-icons-round">person_add</span>
+            Register Member
+          </button>
+          <a href="/members/" class="btn btn-outline btn-lg">
+            <span class="material-icons-round">arrow_back</span>
+            Cancel
+          </a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

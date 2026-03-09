@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}LibrarySphere{% endblock %} | LibrarySphere</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet"/>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- Sidebar Overlay -->
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">📚</div>
+    <div class="sidebar-brand">
+      <h2>LibrarySphere</h2>
+      <span>Management System</span>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-title">Main</div>
+    <div class="nav-item">
+      <a href="/dashboard/" class="nav-link {% if request.path == '/dashboard/' %}active{% endif %}">
+        <span class="material-icons-round">dashboard</span>
+        Dashboard
+      </a>
+    </div>
+
+    <div class="nav-section-title">Library</div>
+    <div class="nav-item">
+      <a href="/books/" class="nav-link {% if '/books' in request.path %}active{% endif %}">
+        <span class="material-icons-round">menu_book</span>
+        Books
+      </a>
+    </div>
+    <div class="nav-item">
+      <a href="/members/" class="nav-link {% if '/members' in request.path %}active{% endif %}">
+        <span class="material-icons-round">people</span>
+        Members
+      </a>
+    </div>
+    <div class="nav-item">
+      <a href="/issues/" class="nav-link {% if '/issues' in request.path %}active{% endif %}">
+        <span class="material-icons-round">swap_horiz</span>
+        Issue & Return
+      </a>
+    </div>
+    <div class="nav-item">
+      <a href="/fines/" class="nav-link {% if '/fines' in request.path %}active{% endif %}">
+        <span class="material-icons-round">payments</span>
+        Fines
+      </a>
+    </div>
+
+    <div class="nav-section-title">Reports</div>
+    <div class="nav-item">
+      <a href="/reports/" class="nav-link {% if '/reports' in request.path %}active{% endif %}">
+        <span class="material-icons-round">bar_chart</span>
+        Reports
+      </a>
+    </div>
+
+    {% if current_user.role == 'admin' %}
+    <div class="nav-section-title">Admin</div>
+    <div class="nav-item">
+      <a href="/books/categories" class="nav-link {% if request.path == '/books/categories' %}active{% endif %}">
+        <span class="material-icons-round">category</span>
+        Categories
+      </a>
+    </div>
+    <div class="nav-item">
+      <a href="/users/" class="nav-link {% if '/users' in request.path %}active{% endif %}">
+        <span class="material-icons-round">manage_accounts</span>
+        User Management
+      </a>
+    </div>
+    {% endif %}
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="user-avatar">
+        {{ current_user.username[0].upper() }}
+      </div>
+      <div class="user-details">
+        <h6>{{ current_user.username }}</h6>
+        <span>{{ current_user.role | capitalize }}</span>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button id="sidebarToggle" class="topbar-btn">
+        <span class="material-icons-round">menu</span>
+      </button>
+      <div class="page-title">
+        <h4>{% block page_title %}Dashboard{% endblock %}</h4>
+        <p>{% block page_subtitle %}Welcome to LibrarySphere{% endblock %}</p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <a href="/issues/" class="topbar-btn" title="Issues">
+        <span class="material-icons-round">swap_horiz</span>
+      </a>
+      <a href="/fines/" class="topbar-btn" title="Fines">
+        <span class="material-icons-round">notifications</span>
+      </a>
+      <a href="/auth/logout" class="topbar-btn" title="Logout">
+        <span class="material-icons-round">logout</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Flash Messages -->
+  <div style="padding: 16px 28px 0;">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">
+            <span class="material-icons-round" style="font-size:18px;">
+              {% if category == 'success' %}check_circle
+              {% elif category == 'danger' %}error
+              {% elif category == 'warning' %}warning
+              {% else %}info{% endif %}
+            </span>
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- Page Content -->
+  <main class="page-content">
+    {% block content %}{% endblock %}
+  </main>
+
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block extra_js %}{% endblock %}
+
+<style>
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 999;
+}
+.sidebar-overlay.show { display: block; }
+</style>
+
+</body>
+</html>

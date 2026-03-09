@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+{% block title %}Reports{% endblock %}
+{% block page_title %}Reports & Analytics{% endblock %}
+{% block page_subtitle %}Library performance overview{% endblock %}
+
+{% block content %}
+
+<!-- Overview KPI Cards -->
+<div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px;">
+  <div class="kpi-card blue">
+    <div class="kpi-icon blue"><span class="material-icons-round">menu_book</span></div>
+    <div class="kpi-value">{{ total_books }}</div>
+    <div class="kpi-label">Total Books</div>
+  </div>
+  <div class="kpi-card green">
+    <div class="kpi-icon green"><span class="material-icons-round">people</span></div>
+    <div class="kpi-value">{{ active_members }}</div>
+    <div class="kpi-label">Active Members</div>
+  </div>
+  <div class="kpi-card orange">
+    <div class="kpi-icon orange"><span class="material-icons-round">swap_horiz</span></div>
+    <div class="kpi-value">{{ active_issues }}</div>
+    <div class="kpi-label">Active Issues</div>
+  </div>
+  <div class="kpi-card red">
+    <div class="kpi-icon red"><span class="material-icons-round">warning</span></div>
+    <div class="kpi-value">{{ overdue_issues }}</div>
+    <div class="kpi-label">Overdue Books</div>
+  </div>
+</div>
+
+<!-- Fines Summary -->
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
+  <div class="kpi-card red">
+    <div class="kpi-icon red"><span class="material-icons-round">pending</span></div>
+    <div class="kpi-value">₹{{ "%.0f"|format(total_fines) }}</div>
+    <div class="kpi-label">Pending Fines</div>
+  </div>
+  <div class="kpi-card green">
+    <div class="kpi-icon green"><span class="material-icons-round">payments</span></div>
+    <div class="kpi-value">₹{{ "%.0f"|format(collected_fines) }}</div>
+    <div class="kpi-label">Fines Collected</div>
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div style="display:grid; grid-template-columns:2fr 1fr; gap:20px; margin-bottom:24px;">
+
+  <!-- Monthly Issues Chart -->
+  <div class="card">
+    <div class="card-header">
+      <h5 class="card-title">
+        <span class="material-icons-round" style="color:var(--primary);">bar_chart</span>
+        Monthly Issues (Last 6 Months)
+      </h5>
+    </div>
+    <div class="card-body">
+      <canvas id="monthlyChart" height="120"></canvas>
+    </div>
+  </div>
+
+  <!-- Category Distribution -->
+  <div class="card">
+    <div class="card-header">
+      <h5 class="card-title">
+        <span class="material-icons-round" style="color:var(--secondary);">donut_large</span>
+        Books by Category
+      </h5>
+    </div>
+    <div class="card-body">
+      <canvas id="categoryChart" height="180"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<!-- Top Books & Members Row -->
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px;">
+
+  <!-- Top Books -->
+  <div class="card">
+    <div class="card-header">
+      <h5 class="card-title">
+        <span class="material-icons-round" style="color:var(--warning);">star</span>
+        Most Issued Books
+      </h5>
+    </div>
+    <div class="card-body" style="padding:0;">
+      {% if top_books %}
+      {% for book in top_books %}
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid var(--gray-light);">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="width:32px; height:32px; background:linear-gradient(135deg,var(--primary),var(--secondary)); border-radius:8px; display:flex; align-items:center; justify-content:center; color:white; font-weight:700; font-size:13px;">
+            {{ loop.index }}
+          </div>
+          <div>
+            <div style="font-weight:600; color:var(--dark); font-size:14px;">{{ book.title[:35] }}{% if book.title|length > 35 %}...{% endif %}</div>
+            <div style="font-size:12px; color:var(--gray);">{{ book.author }}</div>
+          </div>
+        </div>
+        <span style="background:rgba(79,70,229,0.1); color:var(--primary); padding:4px 12px; border-radius:20px; font-weight:700; font-size:13px;">
+          {{ book.issue_count }}x
+        </span>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div style="text-align:center; padding:30px; color:var(--gray);">No data yet</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Top Members -->
+  <div class="card">
+    <div class="card-header">
+      <h5 class="card-title">
+        <span class="material-icons-round" style="color:var(--success);">emoji_events</span>
+        Most Active Members
+      </h5>
+    </div>
+    <div class="card-body" style="padding:0;">
+      {% if top_members %}
+      {% for member in top_members %}
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid var(--gray-light);">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div style="width:36px; height:36px; background:linear-gradient(135deg,var(--success),#34d399); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:700;">
+            {{ member.name[0].upper() }}
+          </div>
+          <div>
+            <div style="font-weight:600; color:var(--dark); font-size:14px;">{{ member.name }}</div>
+            <div style="font-size:12px; color:var(--primary); font-family:monospace;">{{ member.member_code }}</div>
+          </div>
+        </div>
+        <span style="background:rgba(16,185,129,0.1); color:var(--success); padding:4px 12px; border-radius:20px; font-weight:700; font-size:13px;">
+          {{ member.issue_count }} issues
+        </span>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div style="text-align:center; padding:30px; color:var(--gray);">No data yet</div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<!-- Overdue & Expiring Row -->
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+
+  <!-- Overdue Books -->
+  <div class="card">
+    <div class="card-header">
+      <h5 class="card-title">
+        <span class="material-icons-round" style="color:var(--danger);">warning</span>
+        Overdue Books
+      </h5>
+      <a href="/issues/?status=overdue" class="btn btn-outline btn-sm">View All</a>
+    </div>
+    <div class="card-body" style="padding:0;">
+      {% if overdue_list %}
+      {% for issue in overdue_list %}
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 20px; border-bottom:1px solid var(--gray-light);">
+        <div>
+          <div style="font-weight:600; color:var(--dark); font-size:13px;">{{ issue.book.title[:30] }}{% if issue.book.title|length > 30 %}...{% endif %}</div>
+          <div style="font-size:12px; color:var(--gray);">{{ issue.member.name }} · {{ issue.member.member_code }}</div>
+        </div>
+        <span style="background:rgba(239,68,68,0.1); color:var(--danger); padding:4px 10px; border-radius:20px; font-weight:700; font-size:12px;">
+          {{ issue.overdue_days }}d overdue
+        </span>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div style="text-align:center; padding:30px;">
+        <span class="material-icons-round" style="font-size:40px; color:var(--success); opacity:0.5;">check_circle</span>
+        <p style="color:var(--gray); margin-top:8px; font-size:14px;">No overdue books! 🎉</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Expiring Memberships -->
+  <div class="card">
+    <div class="card-header">
+      <h5 class="card-title">
+        <span class="material-icons-round" style="color:var(--warning);">card_membership</span>
+        Memberships Expiring Soon
+      </h5>
+      <a href="/members/" class="btn btn-outline btn-sm">View All</a>
+    </div>
+    <div class="card-body" style="padding:0;">
+      {% if expiring_members %}
+      {% for member in expiring_members %}
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 20px; border-bottom:1px solid var(--gray-light);">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:32px; height:32px; background:linear-gradient(135deg,var(--warning),#fcd34d); border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:700; font-size:13px;">
+            {{ member.name[0].upper() }}
+          </div>
+          <div>
+            <div style="font-weight:600; color:var(--dark); font-size:13px;">{{ member.name }}</div>
+            <div style="font-size:12px; color:var(--gray);">{{ member.expiry_date.strftime('%d %b %Y') }}</div>
+          </div>
+        </div>
+        <span style="background:rgba(245,158,11,0.1); color:var(--warning); padding:4px 10px; border-radius:20px; font-weight:700; font-size:12px;">
+          {{ member.days_until_expiry }}d left
+        </span>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div style="text-align:center; padding:30px;">
+        <span class="material-icons-round" style="font-size:40px; color:var(--success); opacity:0.5;">check_circle</span>
+        <p style="color:var(--gray); margin-top:8px; font-size:14px;">No expiring memberships! 🎉</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Monthly Issues Chart
+const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+new Chart(monthlyCtx, {
+  type: 'bar',
+  data: {
+    labels: {{ monthly_data | map(attribute='month') | list | tojson }},
+    datasets: [{
+      label: 'Books Issued',
+      data: {{ monthly_data | map(attribute='count') | list | tojson }},
+      backgroundColor: 'rgba(79,70,229,0.7)',
+      borderColor: 'rgba(79,70,229,1)',
+      borderWidth: 2,
+      borderRadius: 8
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, ticks: { stepSize: 1 } }
+    }
+  }
+});
+
+// Category Chart
+const catCtx = document.getElementById('categoryChart').getContext('2d');
+new Chart(catCtx, {
+  type: 'doughnut',
+  data: {
+    labels: {{ category_data | map(attribute='name') | list | tojson }},
+    datasets: [{
+      data: {{ category_data | map(attribute='book_count') | list | tojson }},
+      backgroundColor: [
+        '#4F46E5','#7C3AED','#EC4899','#F59E0B',
+        '#10B981','#3B82F6','#EF4444','#8B5CF6'
+      ],
+      borderWidth: 0
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+    }
+  }
+});
+</script>
+{% endblock %}

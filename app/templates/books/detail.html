@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% block title %}{{ book.title }}{% endblock %}
+{% block page_title %}Book Detail{% endblock %}
+{% block page_subtitle %}View complete book information{% endblock %}
+
+{% block content %}
+
+<div style="max-width:900px;">
+  <div class="card">
+    <div class="card-header">
+      <h5 class="card-title">
+        <span class="material-icons-round" style="color:var(--primary);">menu_book</span>
+        {{ book.title }}
+      </h5>
+      <div style="display:flex; gap:8px;">
+        <a href="/books/edit/{{ book.id }}" class="btn btn-warning btn-sm">
+          <span class="material-icons-round">edit</span>
+          Edit
+        </a>
+        <a href="/books/" class="btn btn-outline btn-sm">
+          <span class="material-icons-round">arrow_back</span>
+          Back
+        </a>
+      </div>
+    </div>
+    <div class="card-body">
+      <div style="display:grid; grid-template-columns:200px 1fr; gap:28px;">
+
+        <!-- Cover Image -->
+        <div>
+          <div style="width:180px; height:240px; background:linear-gradient(135deg, var(--primary), var(--secondary)); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:64px; overflow:hidden; box-shadow:var(--shadow-md);">
+            {% if book.cover_image %}
+            <img src="{{ book.cover_image }}" style="width:100%; height:100%; object-fit:cover;">
+            {% else %}
+            📚
+            {% endif %}
+          </div>
+          <!-- Availability -->
+          <div style="margin-top:16px; text-align:center;">
+            {% if book.available_copies > 0 %}
+            <span class="badge badge-success" style="font-size:13px; padding:8px 16px;">
+              ✅ Available
+            </span>
+            {% else %}
+            <span class="badge badge-danger" style="font-size:13px; padding:8px 16px;">
+              ❌ All Issued
+            </span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Book Info -->
+        <div>
+          <h2 style="font-family:'Playfair Display',serif; font-size:24px; color:var(--dark); margin-bottom:4px;">
+            {{ book.title }}
+          </h2>
+          <p style="color:var(--gray); font-size:16px; margin-bottom:20px;">by {{ book.author }}</p>
+
+          <!-- Details Grid -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
+            <div style="background:var(--light); padding:14px; border-radius:10px;">
+              <div style="font-size:11px; color:var(--gray); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">ISBN</div>
+              <div style="font-weight:600; color:var(--dark);">{{ book.isbn or '—' }}</div>
+            </div>
+            <div style="background:var(--light); padding:14px; border-radius:10px;">
+              <div style="font-size:11px; color:var(--gray); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Publisher</div>
+              <div style="font-weight:600; color:var(--dark);">{{ book.publisher or '—' }}</div>
+            </div>
+            <div style="background:var(--light); padding:14px; border-radius:10px;">
+              <div style="font-size:11px; color:var(--gray); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Category</div>
+              <div style="font-weight:600; color:var(--dark);">{{ book.category.name if book.category else '—' }}</div>
+            </div>
+            <div style="background:var(--light); padding:14px; border-radius:10px;">
+              <div style="font-size:11px; color:var(--gray); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Language</div>
+              <div style="font-weight:600; color:var(--dark);">{{ book.language or '—' }}</div>
+            </div>
+            <div style="background:var(--light); padding:14px; border-radius:10px;">
+              <div style="font-size:11px; color:var(--gray); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Pages</div>
+              <div style="font-weight:600; color:var(--dark);">{{ book.pages or '—' }}</div>
+            </div>
+            <div style="background:var(--light); padding:14px; border-radius:10px;">
+              <div style="font-size:11px; color:var(--gray); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Year</div>
+              <div style="font-weight:600; color:var(--dark);">{{ book.publication_year or '—' }}</div>
+            </div>
+          </div>
+
+          <!-- Copies Info -->
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:20px;">
+            <div style="background:rgba(79,70,229,0.1); padding:16px; border-radius:10px; text-align:center;">
+              <div style="font-size:24px; font-weight:700; color:var(--primary);">{{ book.total_copies }}</div>
+              <div style="font-size:12px; color:var(--gray);">Total Copies</div>
+            </div>
+            <div style="background:rgba(16,185,129,0.1); padding:16px; border-radius:10px; text-align:center;">
+              <div style="font-size:24px; font-weight:700; color:var(--success);">{{ book.available_copies }}</div>
+              <div style="font-size:12px; color:var(--gray);">Available</div>
+            </div>
+            <div style="background:rgba(245,158,11,0.1); padding:16px; border-radius:10px; text-align:center;">
+              <div style="font-size:24px; font-weight:700; color:var(--warning);">{{ book.total_copies - book.available_copies }}</div>
+              <div style="font-size:12px; color:var(--gray);">Issued</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          {% if book.description %}
+          <div style="background:var(--light); padding:16px; border-radius:10px; margin-bottom:20px;">
+            <div style="font-size:12px; color:var(--gray); margin-bottom:8px; font-weight:600;">DESCRIPTION</div>
+            <p style="color:var(--dark); font-size:14px; line-height:1.6; margin:0;">{{ book.description }}</p>
+          </div>
+          {% endif %}
+
+          <!-- Issue History -->
+          {% if book.issues %}
+          <div>
+            <div style="font-size:12px; color:var(--gray); margin-bottom:12px; font-weight:600;">ISSUE HISTORY ({{ book.issues|length }} times)</div>
+            <div class="table-wrapper">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Member</th>
+                    <th>Issue Date</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for issue in book.issues[-5:] %}
+                  <tr>
+                    <td>{{ issue.member.name }}</td>
+                    <td>{{ issue.issue_date.strftime('%d %b %Y') }}</td>
+                    <td>{{ issue.due_date.strftime('%d %b %Y') }}</td>
+                    <td>
+                      {% if issue.status == 'returned' %}
+                      <span class="badge badge-success">Returned</span>
+                      {% elif issue.status == 'issued' %}
+                      <span class="badge badge-info">Issued</span>
+                      {% else %}
+                      <span class="badge badge-danger">Overdue</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          {% endif %}
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

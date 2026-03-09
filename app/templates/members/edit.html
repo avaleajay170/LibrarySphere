@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}Edit Member{% endblock %}
+{% block page_title %}Edit Member{% endblock %}
+{% block page_subtitle %}Update member information{% endblock %}
+
+{% block content %}
+
+<div style="max-width:800px;">
+  <div class="card">
+    <div class="card-header">
+      <h5 class="card-title">
+        <span class="material-icons-round" style="color:var(--primary);">edit</span>
+        Edit Member — {{ member.name }}
+      </h5>
+      <a href="/members/" class="btn btn-outline btn-sm">
+        <span class="material-icons-round">arrow_back</span>
+        Back
+      </a>
+    </div>
+    <div class="card-body">
+
+      <!-- Member Code Badge -->
+      <div style="background:rgba(79,70,229,0.05); border:1px solid rgba(79,70,229,0.2); border-radius:10px; padding:14px 16px; margin-bottom:24px; display:flex; align-items:center; gap:12px;">
+        <span class="material-icons-round" style="color:var(--primary);">badge</span>
+        <div>
+          <div style="font-size:11px; color:var(--gray);">MEMBER CODE</div>
+          <div style="font-weight:700; color:var(--primary); font-size:18px; font-family:monospace;">{{ member.member_code }}</div>
+        </div>
+      </div>
+
+      <form method="POST" action="/members/edit/{{ member.id }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- Row 1 -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Full Name <span style="color:var(--danger);">*</span></label>
+            <input type="text" name="name" class="form-control" value="{{ member.name }}" required>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Email Address <span style="color:var(--danger);">*</span></label>
+            <input type="email" name="email" class="form-control" value="{{ member.email }}" required>
+          </div>
+        </div>
+
+        <!-- Row 2 -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Phone Number</label>
+            <input type="text" name="phone" class="form-control" value="{{ member.phone or '' }}">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Gender</label>
+            <select name="gender" class="form-control">
+              <option value="">Select Gender</option>
+              <option value="male" {% if member.gender == 'male' %}selected{% endif %}>Male</option>
+              <option value="female" {% if member.gender == 'female' %}selected{% endif %}>Female</option>
+              <option value="other" {% if member.gender == 'other' %}selected{% endif %}>Other</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Row 3 -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Date of Birth</label>
+            <input type="date" name="date_of_birth" class="form-control"
+              value="{{ member.date_of_birth.strftime('%Y-%m-%d') if member.date_of_birth else '' }}">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-control" disabled>
+              <option value="{{ member.status }}">{{ member.status | capitalize }}</option>
+            </select>
+            <small style="color:var(--gray); font-size:12px;">Change status from members list</small>
+          </div>
+        </div>
+
+        <!-- Address -->
+        <div class="form-group" style="margin-bottom:24px;">
+          <label class="form-label">Address</label>
+          <textarea name="address" class="form-control" rows="3">{{ member.address or '' }}</textarea>
+        </div>
+
+        <!-- Membership Info -->
+        <div style="background:var(--light); border-radius:10px; padding:16px; margin-bottom:24px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;">
+          <div>
+            <div style="font-size:11px; color:var(--gray); text-transform:uppercase; letter-spacing:1px;">Joined</div>
+            <div style="font-weight:600; color:var(--dark);">{{ member.membership_date.strftime('%d %b %Y') if member.membership_date else '—' }}</div>
+          </div>
+          <div>
+            <div style="font-size:11px; color:var(--gray); text-transform:uppercase; letter-spacing:1px;">Expires</div>
+            <div style="font-weight:600; color:{% if member.is_expired %}var(--danger){% else %}var(--success){% endif %};">
+              {{ member.expiry_date.strftime('%d %b %Y') if member.expiry_date else '—' }}
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px; color:var(--gray); text-transform:uppercase; letter-spacing:1px;">Active Issues</div>
+            <div style="font-weight:600; color:var(--warning);">{{ member.active_issues_count }}</div>
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div style="display:flex; gap:12px;">
+          <button type="submit" class="btn btn-primary btn-lg">
+            <span class="material-icons-round">save</span>
+            Update Member
+          </button>
+          <a href="/members/profile/{{ member.id }}" class="btn btn-outline btn-lg">
+            <span class="material-icons-round">visibility</span>
+            View Profile
+          </a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

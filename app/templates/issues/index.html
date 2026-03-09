@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% block title %}Issue & Return{% endblock %}
+{% block page_title %}Issue & Return{% endblock %}
+{% block page_subtitle %}Manage book issues and returns{% endblock %}
+
+{% block content %}
+
+<!-- Header Row -->
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+  <div>
+    <h3 style="font-size:20px; font-weight:600; color:var(--dark); margin:0;">All Issues</h3>
+    <p style="color:var(--gray); font-size:13px; margin:0;">{{ issues|length }} records found</p>
+  </div>
+  <a href="/issues/issue" class="btn btn-primary">
+    <span class="material-icons-round">add</span>
+    Issue New Book
+  </a>
+</div>
+
+<!-- Filter Tabs -->
+<div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
+  <a href="/issues/" class="btn {% if not selected_status %}btn-primary{% else %}btn-outline{% endif %} btn-sm">
+    All
+  </a>
+  <a href="/issues/?status=issued" class="btn {% if selected_status == 'issued' %}btn-primary{% else %}btn-outline{% endif %} btn-sm">
+    <span class="material-icons-round" style="font-size:14px;">book</span>
+    Issued
+  </a>
+  <a href="/issues/?status=overdue" class="btn {% if selected_status == 'overdue' %}btn-danger{% else %}btn-outline{% endif %} btn-sm">
+    <span class="material-icons-round" style="font-size:14px;">warning</span>
+    Overdue
+  </a>
+  <a href="/issues/?status=returned" class="btn {% if selected_status == 'returned' %}btn-success{% else %}btn-outline{% endif %} btn-sm">
+    <span class="material-icons-round" style="font-size:14px;">check_circle</span>
+    Returned
+  </a>
+</div>
+
+<!-- Search -->
+<div class="card" style="margin-bottom:20px;">
+  <div class="card-body" style="padding:16px;">
+    <form method="GET" action="/issues/" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+      <input type="hidden" name="status" value="{{ selected_status }}">
+      <div style="flex:1; min-width:200px; position:relative;">
+        <span class="material-icons-round" style="position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--gray);">search</span>
+        <input type="text" name="search" value="{{ search }}" placeholder="Search by member name or code..."
+          style="width:100%; padding:10px 16px 10px 40px; border:2px solid var(--gray-light); border-radius:10px; font-size:14px; outline:none; background:var(--light);">
+      </div>
+      <button type="submit" class="btn btn-primary">
+        <span class="material-icons-round">search</span>
+        Search
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Issues Table -->
+<div class="card">
+  <div class="card-body" style="padding:0;">
+    {% if issues %}
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Member</th>
+            <th>Book</th>
+            <th>Issue Date</th>
+            <th>Due Date</th>
+            <th>Return Date</th>
+            <th>Status</th>
+            <th>Fine</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for issue in issues %}
+          <tr {% if issue.is_overdue %}style="background:rgba(239,68,68,0.03);"{% endif %}>
+            <td style="color:var(--gray); font-size:13px;">{{ loop.index }}</td>
+            <td>
+              <div style="font-weight:600; color:var(--dark);">{{ issue.member.name }}</div>
+              <div style="font-size:12px; color:var(--gray);">{{ issue.member.member_code }}</div>
+            </td>
+            <td>
+              <div style="font-weight:600; color:var(--dark);">{{ issue.book.title[:30] }}{% if issue.book.title|length > 30 %}...{% endif %}</div>
+              <div style="font-size:12px; color:var(--gray);">{{ issue.book.author }}</div>
+            </td>
+            <td style="font-size:13px;">{{ issue.issue_date.strftime('%d %b %Y') }}</td>
+            <td>
+              <span style="font-size:13px; font-weight:600; color:{% if issue.is_overdue %}var(--danger){% elif issue.days_remaining <= 3 and issue.status == 'issued' %}var(--warning){% else %}var(--dark){% endif %};">
+                {{ issue.due_date.strftime('%d %b %Y') }}
+                {% if issue.is_overdue %}
+                  <div style="font-size:11px; color:var(--danger);">{{ issue.overdue_days }} days overdue</div>
+                {% elif issue.days_remaining <= 3 and issue.status == 'issued' %}
+                  <div style="font-size:11px; color:var(--warning);">{{ issue.days_remaining }} days left</div>
+                {% endif %}
+              </span>
+            </td>
+            <td style="font-size:13px; color:var(--gray);">
+              {{ issue.return_date.strftime('%d %b %Y') if issue.return_date else '—' }}
+            </td>
+            <td>
+              {% if issue.status == 'returned' %}
+                <span class="badge badge-success">Returned</span>
+              {% elif issue.is_overdue %}
+                <span class="badge badge-danger">Overdue</span>
+              {% else %}
+                <span class="badge badge-info">Issued</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if issue.fine %}
+                <span style="font-weight:600; color:{% if issue.fine.status == 'paid' %}var(--success){% elif issue.fine.status == 'waived' %}var(--gray){% else %}var(--danger){% endif %};">
+                  ₹{{ "%.0f"|format(issue.fine.amount) }}
+                  <div style="font-size:11px;">{{ issue.fine.status | capitalize }}</div>
+                </span>
+              {% elif issue.is_overdue %}
+                <span style="color:var(--danger); font-size:13px; font-weight:600;">
+                  ₹{{ "%.0f"|format(issue.calculated_fine) }}
+                  <div style="font-size:11px;">Pending</div>
+                </span>
+              {% else %}
+                <span style="color:var(--gray);">—</span>
+              {% endif %}
+            </td>
+            <td>
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                {% if issue.status == 'issued' %}
+                  <a href="/issues/return/{{ issue.id }}" class="btn btn-success btn-sm" title="Return Book">
+                    <span class="material-icons-round" style="font-size:16px;">assignment_return</span>
+                    Return
+                  </a>
+                  {% if issue.can_renew() %}
+                  <form method="POST" action="/issues/renew/{{ issue.id }}" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-warning btn-sm" title="Renew">
+                      <span class="material-icons-round" style="font-size:16px;">autorenew</span>
+                    </button>
+                  </form>
+                  {% endif %}
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:60px 20px;">
+      <span class="material-icons-round" style="font-size:64px; color:var(--gray-light);">swap_horiz</span>
+      <h4 style="color:var(--gray); margin-top:16px;">No issues found</h4>
+      <p style="color:var(--gray); font-size:14px;">Issue a book to get started</p>
+      <a href="/issues/issue" class="btn btn-primary" style="margin-top:16px;">
+        <span class="material-icons-round">add</span>
+        Issue First Book
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

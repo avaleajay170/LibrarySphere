@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% block title %}{{ member.name }}{% endblock %}
+{% block page_title %}Member Profile{% endblock %}
+{% block page_subtitle %}View complete member information{% endblock %}
+
+{% block content %}
+
+<div style="display:grid; grid-template-columns:300px 1fr; gap:20px; max-width:1100px;">
+
+  <!-- Left — Profile Card -->
+  <div style="display:flex; flex-direction:column; gap:16px;">
+
+    <div class="card">
+      <div class="card-body" style="text-align:center; padding:32px 24px;">
+
+        <!-- Avatar -->
+        <div class="member-avatar-lg">{{ member.name[0].upper() }}</div>
+
+        <!-- Name & Code -->
+        <h3 style="font-size:20px; font-weight:700; color:var(--dark); margin-bottom:4px;">{{ member.name }}</h3>
+        <div style="font-family:monospace; font-weight:600; color:var(--primary); background:rgba(79,70,229,0.1); padding:4px 14px; border-radius:20px; display:inline-block; margin-bottom:12px;">
+          {{ member.member_code }}
+        </div>
+
+        <!-- Status Badge -->
+        {% if member.status == 'active' %}
+          <div><span class="badge badge-success" style="font-size:13px; padding:6px 16px;">✅ Active</span></div>
+        {% elif member.status == 'inactive' %}
+          <div><span class="badge badge-gray" style="font-size:13px; padding:6px 16px;">⭕ Inactive</span></div>
+        {% else %}
+          <div><span class="badge badge-danger" style="font-size:13px; padding:6px 16px;">🚫 Suspended</span></div>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div style="display:flex; flex-direction:column; gap:8px; margin-top:20px;">
+          <a href="/members/edit/{{ member.id }}" class="btn btn-warning btn-full">
+            <span class="material-icons-round">edit</span>
+            Edit Member
+          </a>
+          {% if member.status == 'active' %}
+          <form method="POST" action="/members/status/{{ member.id }}/suspended">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-danger btn-full" onclick="return confirm('Suspend this member?')">
+              <span class="material-icons-round">block</span>
+              Suspend
+            </button>
+          </form>
+          {% else %}
+          <form method="POST" action="/members/status/{{ member.id }}/active">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-success btn-full">
+              <span class="material-icons-round">check_circle</span>
+              Activate
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Membership Card -->
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title">
+          <span class="material-icons-round" style="color:var(--primary);">card_membership</span>
+          Membership
+        </h5>
+      </div>
+      <div class="card-body">
+        <div style="margin-bottom:12px;">
+          <div style="font-size:11px; color:var(--gray); text-transform:uppercase; letter-spacing:1px;">Joined</div>
+          <div style="font-weight:600; color:var(--dark);">{{ member.membership_date.strftime('%d %b %Y') if member.membership_date else '—' }}</div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <div style="font-size:11px; color:var(--gray); text-transform:uppercase; letter-spacing:1px;">Expires</div>
+          <div style="font-weight:600; color:{% if member.is_expired %}var(--danger){% elif member.days_until_expiry and member.days_until_expiry <= 30 %}var(--warning){% else %}var(--success){% endif %};">
+            {{ member.expiry_date.strftime('%d %b %Y') if member.expiry_date else '—' }}
+            {% if member.days_until_expiry is not none %}
+              {% if member.is_expired %}
+                <div style="font-size:12px;">(Expired)</div>
+              {% elif member.days_until_expiry <= 30 %}
+                <div style="font-size:12px;">({{ member.days_until_expiry }} days left)</div>
+              {% endif %}
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Renew Form -->
+        <form method="POST" action="/members/renew/{{ member.id }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <select name="months" class="form-control" style="margin-bottom:8px;">
+            <option value="6">Renew 6 Months</option>
+            <option value="12" selected>Renew 1 Year</option>
+            <option value="24">Renew 2 Years</option>
+          </select>
+          <button type="submit" class="btn btn-primary btn-full btn-sm">
+            <span class="material-icons-round">autorenew</span>
+            Renew Membership
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Right — Details & History -->
+  <div style="display:flex; flex-direction:column; gap:16px;">
+
+    <!-- Personal Info -->
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title">
+          <span class="material-icons-round" style="color:var(--primary);">person</span>
+          Personal Information
+        </h5>
+      </div>
+      <div class="card-body">
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;">
+          <div style="background:var(--light); padding:14px; border-radius:10px;">
+            <div style="font-size:11px; color:var(--gray); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Email</div>
+            <div style="font-weight:600; color:var(--dark); font-size:13px;">{{ member.email }}</div>
+          </div>
+          <div style="background:var(--light); padding:14px; border-radius:10px;">
+            <div style="font-size:11px; color:var(--gray); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Phone</div>
+            <div style="font-weight:600; color:var(--dark);">{{ member.phone or '—' }}</div>
+          </div>
+          <div style="background:var(--light); padding:14px; border-radius:10px;">
+            <div style="font-size:11px; color:var(--gray); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Gender</div>
+            <div style="font-weight:600; color:var(--dark);">{{ member.gender | capitalize if member.gender else '—' }}</div>
+          </div>
+          <div style="background:var(--light); padding:14px; border-radius:10px;">
+            <div style="font-size:11px; color:var(--gray); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Date of Birth</div>
+            <div style="font-weight:600; color:var(--dark);">{{ member.date_of_birth.strftime('%d %b %Y') if member.date_of_birth else '—' }}</div>
+          </div>
+          <div style="background:var(--light); padding:14px; border-radius:10px; grid-column:span 2;">
+            <div style="font-size:11px; color:var(--gray); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Address</div>
+            <div style="font-weight:600; color:var(--dark);">{{ member.address or '—' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;">
+      <div class="kpi-card blue">
+        <div class="kpi-icon blue">
+          <span class="material-icons-round">swap_horiz</span>
+        </div>
+        <div class="kpi-value">{{ member.issues|length }}</div>
+        <div class="kpi-label">Total Issues</div>
+      </div>
+      <div class="kpi-card orange">
+        <div class="kpi-icon orange">
+          <span class="material-icons-round">book</span>
+        </div>
+        <div class="kpi-value">{{ member.active_issues_count }}</div>
+        <div class="kpi-label">Currently Borrowed</div>
+      </div>
+      <div class="kpi-card red">
+        <div class="kpi-icon red">
+          <span class="material-icons-round">payments</span>
+        </div>
+        <div class="kpi-value">₹{{ "%.0f"|format(member.pending_fines) }}</div>
+        <div class="kpi-label">Pending Fines</div>
+      </div>
+    </div>
+
+    <!-- Borrowing History -->
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title">
+          <span class="material-icons-round" style="color:var(--warning);">history</span>
+          Borrowing History
+        </h5>
+        <span style="font-size:13px; color:var(--gray);">{{ member.issues|length }} total</span>
+      </div>
+      <div class="card-body" style="padding:0;">
+        {% if member.issues %}
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Book</th>
+                <th>Issue Date</th>
+                <th>Due Date</th>
+                <th>Return Date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for issue in member.issues|reverse %}
+              <tr>
+                <td>
+                  <div style="font-weight:600;">{{ issue.book.title[:35] }}{% if issue.book.title|length > 35 %}...{% endif %}</div>
+                  <div style="font-size:12px; color:var(--gray);">{{ issue.book.author }}</div>
+                </td>
+                <td style="font-size:13px;">{{ issue.issue_date.strftime('%d %b %Y') }}</td>
+                <td style="font-size:13px;">{{ issue.due_date.strftime('%d %b %Y') }}</td>
+                <td style="font-size:13px;">{{ issue.return_date.strftime('%d %b %Y') if issue.return_date else '—' }}</td>
+                <td>
+                  {% if issue.status == 'returned' %}
+                    <span class="badge badge-success">Returned</span>
+                  {% elif issue.is_overdue %}
+                    <span class="badge badge-danger">Overdue</span>
+                  {% else %}
+                    <span class="badge badge-info">Issued</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div style="text-align:center; padding:40px; color:var(--gray);">
+          <span class="material-icons-round" style="font-size:48px; opacity:0.3;">history</span>
+          <p style="margin-top:8px;">No borrowing history yet</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% block title %}Add Book{% endblock %}
+{% block page_title %}Add Book{% endblock %}
+{% block page_subtitle %}Add a new book to the library{% endblock %}
+
+{% block content %}
+
+<div style="max-width:900px;">
+
+  <!-- ISBN Lookup Card -->
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-header">
+      <h5 class="card-title">
+        <span class="material-icons-round" style="color:var(--secondary);">search</span>
+        Quick ISBN Lookup
+      </h5>
+    </div>
+    <div class="card-body">
+      <p style="color:var(--gray); font-size:14px; margin-bottom:12px;">
+        Enter ISBN to auto-fill book details from Open Library
+      </p>
+      <div style="display:flex; gap:12px;">
+        <input type="text" id="isbnInput" placeholder="Enter ISBN (e.g. 9780140328721)"
+          style="flex:1; padding:10px 16px; border:2px solid var(--gray-light); border-radius:10px; font-size:14px; outline:none;">
+        <button onclick="lookupISBN()" class="btn btn-primary">
+          <span class="material-icons-round">search</span>
+          Lookup
+        </button>
+      </div>
+      <div id="isbnResult" style="margin-top:12px; display:none;">
+        <div class="alert alert-success">
+          <span class="material-icons-round">check_circle</span>
+          <span id="isbnMessage">Book found! Fields auto-filled.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Book Form -->
+  <div class="card">
+    <div class="card-header">
+      <h5 class="card-title">
+        <span class="material-icons-round" style="color:var(--primary);">menu_book</span>
+        Book Details
+      </h5>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="/books/add">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- Row 1 -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Book Title <span style="color:var(--danger);">*</span></label>
+            <input type="text" name="title" id="title" class="form-control" placeholder="Enter book title" required>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Author <span style="color:var(--danger);">*</span></label>
+            <input type="text" name="author" id="author" class="form-control" placeholder="Enter author name" required>
+          </div>
+        </div>
+
+        <!-- Row 2 -->
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:16px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">ISBN</label>
+            <input type="text" name="isbn" id="isbn" class="form-control" placeholder="ISBN number">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Publisher</label>
+            <input type="text" name="publisher" id="publisher" class="form-control" placeholder="Publisher name">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Publication Year</label>
+            <input type="number" name="publication_year" id="publication_year" class="form-control" placeholder="e.g. 2020" min="1800" max="2026">
+          </div>
+        </div>
+
+        <!-- Row 3 -->
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:16px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Category</label>
+            <select name="category_id" class="form-control">
+              <option value="">Select Category</option>
+              {% for cat in categories %}
+              <option value="{{ cat.id }}">{{ cat.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Total Copies <span style="color:var(--danger);">*</span></label>
+            <input type="number" name="total_copies" class="form-control" value="1" min="1" required>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Language</label>
+            <select name="language" class="form-control">
+              <option value="English">English</option>
+              <option value="Hindi">Hindi</option>
+              <option value="Marathi">Marathi</option>
+              <option value="Sanskrit">Sanskrit</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Row 4 -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Number of Pages</label>
+            <input type="number" name="pages" id="pages" class="form-control" placeholder="e.g. 350" min="1">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Cover Image URL</label>
+            <input type="text" name="cover_image" id="cover_image" class="form-control" placeholder="https://...">
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group" style="margin-bottom:24px;">
+          <label class="form-label">Description</label>
+          <textarea name="description" class="form-control" rows="3" placeholder="Book description..."></textarea>
+        </div>
+
+        <!-- Buttons -->
+        <div style="display:flex; gap:12px;">
+          <button type="submit" class="btn btn-primary btn-lg">
+            <span class="material-icons-round">save</span>
+            Save Book
+          </button>
+          <a href="/books/" class="btn btn-outline btn-lg">
+            <span class="material-icons-round">arrow_back</span>
+            Cancel
+          </a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function lookupISBN() {
+  const isbn = document.getElementById('isbnInput').value.trim();
+  if (!isbn) {
+    alert('Please enter an ISBN number');
+    return;
+  }
+
+  const btn = event.target;
+  btn.innerHTML = '<span class="material-icons-round">hourglass_empty</span> Looking up...';
+  btn.disabled = true;
+
+  try {
+    const response = await fetch(`/books/isbn-lookup?isbn=${isbn}`);
+    const data = await response.json();
+
+    if (data.error) {
+      document.getElementById('isbnResult').style.display = 'block';
+      document.getElementById('isbnResult').innerHTML = `
+        <div class="alert alert-danger">
+          <span class="material-icons-round">error</span>
+          ${data.error}
+        </div>`;
+    } else {
+      // Auto fill form fields
+      if (data.title) document.getElementById('title').value = data.title;
+      if (data.author) document.getElementById('author').value = data.author;
+      if (data.publisher) document.getElementById('publisher').value = data.publisher;
+      if (data.pages) document.getElementById('pages').value = data.pages;
+      if (data.cover) document.getElementById('cover_image').value = data.cover;
+      if (data.year) document.getElementById('publication_year').value = data.year.replace(/\D/g, '').slice(0, 4);
+      document.getElementById('isbn').value = isbn;
+
+      document.getElementById('isbnResult').style.display = 'block';
+      document.getElementById('isbnResult').innerHTML = `
+        <div class="alert alert-success">
+          <span class="material-icons-round">check_circle</span>
+          Book found! Fields auto-filled. Please verify and save.
+        </div>`;
+    }
+  } catch (err) {
+    alert('Lookup failed. Please fill details manually.');
+  }
+
+  btn.innerHTML = '<span class="material-icons-round">search</span> Lookup';
+  btn.disabled = false;
+}
+</script>
+{% endblock %}

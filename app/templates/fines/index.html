@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% block title %}Fines{% endblock %}
+{% block page_title %}Fines Management{% endblock %}
+{% block page_subtitle %}Track and collect overdue fines{% endblock %}
+
+{% block content %}
+
+<!-- Stats Row -->
+<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:24px;">
+  <div class="kpi-card red">
+    <div class="kpi-icon red">
+      <span class="material-icons-round">pending</span>
+    </div>
+    <div class="kpi-value">₹{{ "%.0f"|format(total_pending) }}</div>
+    <div class="kpi-label">Pending Fines</div>
+  </div>
+  <div class="kpi-card green">
+    <div class="kpi-icon green">
+      <span class="material-icons-round">payments</span>
+    </div>
+    <div class="kpi-value">₹{{ "%.0f"|format(total_collected) }}</div>
+    <div class="kpi-label">Total Collected</div>
+  </div>
+  <div class="kpi-card orange">
+    <div class="kpi-icon orange">
+      <span class="material-icons-round">do_not_disturb</span>
+    </div>
+    <div class="kpi-value">₹{{ "%.0f"|format(total_waived) }}</div>
+    <div class="kpi-label">Total Waived</div>
+  </div>
+</div>
+
+<!-- Filter Tabs -->
+<div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
+  <a href="/fines/" class="btn {% if not selected_status %}btn-primary{% else %}btn-outline{% endif %} btn-sm">All</a>
+  <a href="/fines/?status=pending" class="btn {% if selected_status == 'pending' %}btn-danger{% else %}btn-outline{% endif %} btn-sm">
+    <span class="material-icons-round" style="font-size:14px;">pending</span> Pending
+  </a>
+  <a href="/fines/?status=paid" class="btn {% if selected_status == 'paid' %}btn-success{% else %}btn-outline{% endif %} btn-sm">
+    <span class="material-icons-round" style="font-size:14px;">check_circle</span> Paid
+  </a>
+  <a href="/fines/?status=waived" class="btn {% if selected_status == 'waived' %}btn-warning{% else %}btn-outline{% endif %} btn-sm">
+    <span class="material-icons-round" style="font-size:14px;">do_not_disturb</span> Waived
+  </a>
+</div>
+
+<!-- Search -->
+<div class="card" style="margin-bottom:20px;">
+  <div class="card-body" style="padding:16px;">
+    <form method="GET" action="/fines/" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+      <input type="hidden" name="status" value="{{ selected_status }}">
+      <div style="flex:1; min-width:200px; position:relative;">
+        <span class="material-icons-round" style="position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--gray);">search</span>
+        <input type="text" name="search" value="{{ search }}" placeholder="Search by member name or code..."
+          style="width:100%; padding:10px 16px 10px 40px; border:2px solid var(--gray-light); border-radius:10px; font-size:14px; outline:none; background:var(--light);">
+      </div>
+      <button type="submit" class="btn btn-primary">
+        <span class="material-icons-round">search</span> Search
+      </button>
+      <a href="/fines/" class="btn btn-outline">
+        <span class="material-icons-round">clear</span> Clear
+      </a>
+    </form>
+  </div>
+</div>
+
+<!-- Fines Table -->
+<div class="card">
+  <div class="card-body" style="padding:0;">
+    {% if fines %}
+    <div class="table-wrapper">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Member</th>
+            <th>Book</th>
+            <th>Overdue Days</th>
+            <th>Fine Amount</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for fine in fines %}
+          <tr>
+            <td style="color:var(--gray); font-size:13px;">{{ loop.index }}</td>
+            <td>
+              <div style="font-weight:600; color:var(--dark);">{{ fine.issue.member.name }}</div>
+              <div style="font-size:12px; color:var(--primary); font-family:monospace;">{{ fine.issue.member.member_code }}</div>
+            </td>
+            <td>
+              <div style="font-weight:600; color:var(--dark);">{{ fine.issue.book.title[:30] }}{% if fine.issue.book.title|length > 30 %}...{% endif %}</div>
+              <div style="font-size:12px; color:var(--gray);">{{ fine.issue.book.author }}</div>
+            </td>
+            <td>
+              <span style="font-weight:600; color:var(--danger);">
+                {{ fine.issue.overdue_days }} days
+              </span>
+            </td>
+            <td>
+              <span style="font-size:18px; font-weight:700; color:{% if fine.status == 'paid' %}var(--success){% elif fine.status == 'waived' %}var(--gray){% else %}var(--danger){% endif %};">
+                ₹{{ "%.0f"|format(fine.amount) }}
+              </span>
+            </td>
+            <td>
+              {% if fine.status == 'paid' %}
+                <span class="badge badge-success">✅ Paid</span>
+                {% if fine.paid_at %}
+                <div style="font-size:11px; color:var(--gray);">{{ fine.paid_at.strftime('%d %b %Y') }}</div>
+                {% endif %}
+              {% elif fine.status == 'waived' %}
+                <span class="badge badge-gray">Waived</span>
+                {% if fine.waive_reason %}
+                <div style="font-size:11px; color:var(--gray);">{{ fine.waive_reason[:20] }}</div>
+                {% endif %}
+              {% else %}
+                <span class="badge badge-danger">⏳ Pending</span>
+              {% endif %}
+            </td>
+            <td style="font-size:13px; color:var(--gray);">
+              {{ fine.created_at.strftime('%d %b %Y') if fine.created_at else '—' }}
+            </td>
+            <td>
+              {% if fine.status == 'pending' %}
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <!-- Collect -->
+                <form method="POST" action="/fines/collect/{{ fine.id }}" style="display:inline;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-success btn-sm" title="Mark as Paid"
+                    onclick="return confirm('Collect ₹{{ fine.amount|int }} from {{ fine.issue.member.name }}?')">
+                    <span class="material-icons-round" style="font-size:15px;">payments</span>
+                    Collect
+                  </button>
+                </form>
+                <!-- Waive -->
+                <form method="POST" action="/fines/waive/{{ fine.id }}" style="display:inline;"
+                  onsubmit="return setWaiveReason(this)">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="reason" id="reason_{{ fine.id }}" value="Waived by admin">
+                  <button type="submit" class="btn btn-warning btn-sm" title="Waive Fine">
+                    <span class="material-icons-round" style="font-size:15px;">do_not_disturb</span>
+                    Waive
+                  </button>
+                </form>
+              </div>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:60px 20px;">
+      <span class="material-icons-round" style="font-size:64px; color:var(--gray-light);">payments</span>
+      <h4 style="color:var(--gray); margin-top:16px;">No fines found</h4>
+      <p style="color:var(--gray); font-size:14px;">Fines are created automatically when overdue books are returned</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function setWaiveReason(form) {
+  const reason = prompt('Enter reason for waiving this fine:', 'Waived by admin');
+  if (reason === null) return false;
+  form.querySelector('[name="reason"]').value = reason || 'Waived by admin';
+  return true;
+}
+</script>
+{% endblock %}

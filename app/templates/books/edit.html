@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% block title %}Edit Book{% endblock %}
+{% block page_title %}Edit Book{% endblock %}
+{% block page_subtitle %}Update book information{% endblock %}
+
+{% block content %}
+
+<div style="max-width:900px;">
+  <div class="card">
+    <div class="card-header">
+      <h5 class="card-title">
+        <span class="material-icons-round" style="color:var(--primary);">edit</span>
+        Edit Book — {{ book.title }}
+      </h5>
+      <a href="/books/" class="btn btn-outline btn-sm">
+        <span class="material-icons-round">arrow_back</span>
+        Back
+      </a>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="/books/edit/{{ book.id }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- Row 1 -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Book Title <span style="color:var(--danger);">*</span></label>
+            <input type="text" name="title" class="form-control" value="{{ book.title }}" required>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Author <span style="color:var(--danger);">*</span></label>
+            <input type="text" name="author" class="form-control" value="{{ book.author }}" required>
+          </div>
+        </div>
+
+        <!-- Row 2 -->
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:16px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">ISBN</label>
+            <input type="text" name="isbn" class="form-control" value="{{ book.isbn or '' }}">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Publisher</label>
+            <input type="text" name="publisher" class="form-control" value="{{ book.publisher or '' }}">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Publication Year</label>
+            <input type="number" name="publication_year" class="form-control" value="{{ book.publication_year or '' }}" min="1800" max="2026">
+          </div>
+        </div>
+
+        <!-- Row 3 -->
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:16px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Category</label>
+            <select name="category_id" class="form-control">
+              <option value="">Select Category</option>
+              {% for cat in categories %}
+              <option value="{{ cat.id }}" {% if book.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Total Copies <span style="color:var(--danger);">*</span></label>
+            <input type="number" name="total_copies" class="form-control" value="{{ book.total_copies }}" min="1" required>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Language</label>
+            <select name="language" class="form-control">
+              <option value="English" {% if book.language == 'English' %}selected{% endif %}>English</option>
+              <option value="Hindi" {% if book.language == 'Hindi' %}selected{% endif %}>Hindi</option>
+              <option value="Marathi" {% if book.language == 'Marathi' %}selected{% endif %}>Marathi</option>
+              <option value="Sanskrit" {% if book.language == 'Sanskrit' %}selected{% endif %}>Sanskrit</option>
+              <option value="Other" {% if book.language == 'Other' %}selected{% endif %}>Other</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Row 4 -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Number of Pages</label>
+            <input type="number" name="pages" class="form-control" value="{{ book.pages or '' }}" min="1">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Cover Image URL</label>
+            <input type="text" name="cover_image" class="form-control" value="{{ book.cover_image or '' }}">
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group" style="margin-bottom:24px;">
+          <label class="form-label">Description</label>
+          <textarea name="description" class="form-control" rows="3">{{ book.description or '' }}</textarea>
+        </div>
+
+        <!-- Info Box -->
+        <div style="background:var(--light); border-radius:10px; padding:16px; margin-bottom:24px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;">
+          <div>
+            <div style="font-size:12px; color:var(--gray);">Total Copies</div>
+            <div style="font-weight:600; color:var(--dark);">{{ book.total_copies }}</div>
+          </div>
+          <div>
+            <div style="font-size:12px; color:var(--gray);">Available Copies</div>
+            <div style="font-weight:600; color:var(--success);">{{ book.available_copies }}</div>
+          </div>
+          <div>
+            <div style="font-size:12px; color:var(--gray);">Currently Issued</div>
+            <div style="font-weight:600; color:var(--warning);">{{ book.total_copies - book.available_copies }}</div>
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div style="display:flex; gap:12px;">
+          <button type="submit" class="btn btn-primary btn-lg">
+            <span class="material-icons-round">save</span>
+            Update Book
+          </button>
+          <a href="/books/" class="btn btn-outline btn-lg">
+            <span class="material-icons-round">arrow_back</span>
+            Cancel
+          </a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

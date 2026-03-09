@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block title %}Books{% endblock %}
+{% block page_title %}Books{% endblock %}
+{% block page_subtitle %}Manage your library collection{% endblock %}
+
+{% block content %}
+
+<!-- Header Row -->
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+  <div>
+    <h3 style="font-size:20px; font-weight:600; color:var(--dark); margin:0;">All Books</h3>
+    <p style="color:var(--gray); font-size:13px; margin:0;">{{ books|length }} books found</p>
+  </div>
+  <a href="/books/add" class="btn btn-primary">
+    <span class="material-icons-round">add</span>
+    Add New Book
+  </a>
+</div>
+
+<!-- Search & Filter -->
+<div class="card" style="margin-bottom:20px;">
+  <div class="card-body" style="padding:16px;">
+    <form method="GET" action="/books/" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+      <div class="search-box" style="flex:1; min-width:200px;">
+        <span class="material-icons-round" style="position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--gray);">search</span>
+        <input type="text" name="search" value="{{ search }}" placeholder="Search by title, author, ISBN..." style="width:100%; padding:10px 16px 10px 40px; border:2px solid var(--gray-light); border-radius:10px; font-size:14px; outline:none; background:var(--light);">
+      </div>
+      <select name="category" style="padding:10px 16px; border:2px solid var(--gray-light); border-radius:10px; font-size:14px; outline:none; background:var(--light); color:var(--dark);">
+        <option value="">All Categories</option>
+        {% for cat in categories %}
+        <option value="{{ cat.id }}" {% if selected_category == cat.id|string %}selected{% endif %}>{{ cat.name }}</option>
+        {% endfor %}
+      </select>
+      <select name="availability" style="padding:10px 16px; border:2px solid var(--gray-light); border-radius:10px; font-size:14px; outline:none; background:var(--light); color:var(--dark);">
+        <option value="">All Availability</option>
+        <option value="available" {% if selected_availability == 'available' %}selected{% endif %}>Available</option>
+        <option value="unavailable" {% if selected_availability == 'unavailable' %}selected{% endif %}>Not Available</option>
+      </select>
+      <button type="submit" class="btn btn-primary">
+        <span class="material-icons-round">filter_list</span>
+        Filter
+      </button>
+      <a href="/books/" class="btn btn-outline">
+        <span class="material-icons-round">clear</span>
+        Clear
+      </a>
+    </form>
+  </div>
+</div>
+
+<!-- Books Table -->
+<div class="card">
+  <div class="card-body" style="padding:0;">
+    {% if books %}
+    <div class="table-wrapper">
+      <table class="table" id="booksTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Book</th>
+            <th>ISBN</th>
+            <th>Category</th>
+            <th>Copies</th>
+            <th>Available</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for book in books %}
+          <tr>
+            <td style="color:var(--gray); font-size:13px;">{{ loop.index }}</td>
+            <td>
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:40px; height:50px; background:linear-gradient(135deg, var(--primary), var(--secondary)); border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">
+                  {% if book.cover_image %}
+                  <img src="{{ book.cover_image }}" style="width:100%; height:100%; object-fit:cover; border-radius:6px;">
+                  {% else %}
+                  📚
+                  {% endif %}
+                </div>
+                <div>
+                  <div style="font-weight:600; color:var(--dark);">{{ book.title[:40] }}{% if book.title|length > 40 %}...{% endif %}</div>
+                  <div style="font-size:12px; color:var(--gray);">{{ book.author }}</div>
+                </div>
+              </div>
+            </td>
+            <td style="font-size:13px; color:var(--gray);">{{ book.isbn or '—' }}</td>
+            <td>
+              {% if book.category %}
+              <span class="badge badge-primary">{{ book.category.name }}</span>
+              {% else %}
+              <span style="color:var(--gray); font-size:13px;">—</span>
+              {% endif %}
+            </td>
+            <td style="font-weight:600; text-align:center;">{{ book.total_copies }}</td>
+            <td style="text-align:center;">
+              <span style="font-weight:600; color:{% if book.available_copies > 0 %}var(--success){% else %}var(--danger){% endif %};">
+                {{ book.available_copies }}
+              </span>
+            </td>
+            <td>
+              {% if book.available_copies > 0 %}
+              <span class="badge badge-success">Available</span>
+              {% else %}
+              <span class="badge badge-danger">All Issued</span>
+              {% endif %}
+            </td>
+            <td>
+              <div style="display:flex; gap:6px;">
+                <a href="/books/detail/{{ book.id }}" class="btn btn-outline btn-sm" title="View">
+                  <span class="material-icons-round" style="font-size:16px;">visibility</span>
+                </a>
+                <a href="/books/edit/{{ book.id }}" class="btn btn-warning btn-sm" title="Edit">
+                  <span class="material-icons-round" style="font-size:16px;">edit</span>
+                </a>
+                <form method="POST" action="/books/delete/{{ book.id }}" style="display:inline;" onsubmit="return confirm('Delete this book?')">
+                  <button type="submit" class="btn btn-danger btn-sm" title="Delete">
+                    <span class="material-icons-round" style="font-size:16px;">delete</span>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:60px 20px;">
+      <span class="material-icons-round" style="font-size:64px; color:var(--gray-light);">menu_book</span>
+      <h4 style="color:var(--gray); margin-top:16px;">No books found</h4>
+      <p style="color:var(--gray); font-size:14px;">Add your first book to get started</p>
+      <a href="/books/add" class="btn btn-primary" style="margin-top:16px;">
+        <span class="material-icons-round">add</span>
+        Add First Book
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
